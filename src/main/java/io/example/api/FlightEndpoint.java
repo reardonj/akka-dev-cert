@@ -1,10 +1,5 @@
 package io.example.api;
 
-import java.util.Collections;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import akka.http.javadsl.model.HttpResponse;
 import akka.javasdk.annotations.Acl;
 import akka.javasdk.annotations.http.Delete;
@@ -15,9 +10,15 @@ import akka.javasdk.client.ComponentClient;
 import akka.javasdk.http.AbstractHttpEndpoint;
 import akka.javasdk.http.HttpException;
 import akka.javasdk.http.HttpResponses;
+import io.example.application.BookingSlotEntity;
 import io.example.application.ParticipantSlotsView.SlotList;
+import io.example.domain.Participant;
 import io.example.domain.Participant.ParticipantType;
 import io.example.domain.Timeslot;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Collections;
 
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.INTERNET))
 @HttpEndpoint("/flight")
@@ -70,7 +71,7 @@ public class FlightEndpoint extends AbstractHttpEndpoint {
         // Add entity state request
 
         return new Timeslot(Collections.emptySet(),
-                Collections.emptySet());
+            Collections.emptySet());
     }
 
     // Indicates that the supplied participant is available for booking
@@ -88,7 +89,11 @@ public class FlightEndpoint extends AbstractHttpEndpoint {
 
         log.info("Marking timeslot available for entity {}", slotId);
 
-        // Add entity client to mark slot available
+        var participant = new Participant(request.participantId, participantType);
+        componentClient
+            .forEventSourcedEntity(slotId)
+            .method(BookingSlotEntity::markSlotAvailable)
+            .invoke(new BookingSlotEntity.Command.MarkSlotAvailable(participant));
 
         return HttpResponses.ok();
     }
@@ -111,7 +116,7 @@ public class FlightEndpoint extends AbstractHttpEndpoint {
 
     // Public API representation of a booking request
     public record BookingRequest(
-            String studentId, String aircraftId, String instructorId, String bookingId) {
+        String studentId, String aircraftId, String instructorId, String bookingId) {
     }
 
     // Public API representation of an availability mark/unmark request

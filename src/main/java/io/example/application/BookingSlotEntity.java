@@ -7,10 +7,10 @@ import akka.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import io.example.domain.BookingEvent;
 import io.example.domain.Participant;
 import io.example.domain.Timeslot;
-import java.util.HashSet;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashSet;
 
 @ComponentId("booking-slot")
 public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent> {
@@ -23,7 +23,18 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
     }
 
     public Effect<Done> markSlotAvailable(Command.MarkSlotAvailable cmd) {
-        return effects().error("not yet implemented");
+        if (currentState().available().contains(cmd.participant)) {
+            return effects().error("participant already available");
+        }
+
+        // TODO check if booked already?
+
+        var event = new BookingEvent.ParticipantMarkedAvailable(
+            this.entityId,
+            cmd.participant.id(),
+            cmd.participant.participantType()
+        );
+        return effects().persist(event).thenReply((evt) -> Done.getInstance());
     }
 
     public Effect<Done> unmarkSlotAvailable(Command.UnmarkSlotAvailable cmd) {
@@ -50,15 +61,17 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
     @Override
     public Timeslot emptyState() {
         return new Timeslot(
-                // NOTE: these are just estimates for capacity based on it being a sample
-                HashSet.newHashSet(10), HashSet.newHashSet(10));
+            // NOTE: these are just estimates for capacity based on it being a sample
+            HashSet.newHashSet(10), HashSet.newHashSet(10)
+        );
     }
 
     @Override
     public Timeslot applyEvent(BookingEvent event) {
-        // Supply your own implementation to update state based
-        // on the event
-        return currentState();
+        return switch (event) {
+            case BookingEvent.ParticipantMarkedAvailable available -> currentState().reserve(available);
+            default -> currentState();
+        };
     }
 
     public sealed interface Command {
@@ -69,8 +82,8 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
         }
 
         record BookReservation(
-                String studentId, String aircraftId, String instructorId, String bookingId)
-                implements Command {
+            String studentId, String aircraftId, String instructorId, String bookingId)
+            implements Command {
         }
     }
 }
