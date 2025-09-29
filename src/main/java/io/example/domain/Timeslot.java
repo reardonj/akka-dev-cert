@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-// The Timeslot is a core domain object. It maintain two internal sets:
+// The Timeslot is a core domain object. It maintains two internal sets:
 // the list of bookings and the list of participants available for booking.
 // As bookings and availability are added and removed, the contents of those
 // sets are shifted from one to the other.
