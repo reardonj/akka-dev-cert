@@ -13,8 +13,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@ComponentId("view-participant-slots")
-public class ParticipantSlotsView extends View {
+//@ComponentId("view-participant-slots")
+public class ParticipantSlotsView /*extends View*/ {
 
     private static Logger logger = LoggerFactory.getLogger(ParticipantSlotsView.class);
 
@@ -40,14 +40,14 @@ public class ParticipantSlotsView extends View {
 
     public record SlotList(List<SlotRow> slots) {
     }
-
-    // @Query("SELECT .... ")
-    public QueryEffect<SlotList> getSlotsByParticipant(String participantId) {
-        return queryResult();
-    }
-
-    // @Query("SELECT ...")
-    public QueryEffect<SlotList> getSlotsByParticipantAndStatus(ParticipantStatusInput input) {
-        return queryResult();
-    }
+//
+//    // @Query("SELECT .... ")
+//    public QueryEffect<SlotList> getSlotsByParticipant(String participantId) {
+//        return queryResult();
+//    }
+//
+//    // @Query("SELECT ...")
+//    public QueryEffect<SlotList> getSlotsByParticipantAndStatus(ParticipantStatusInput input) {
+//        return queryResult();
+//    }
 }
