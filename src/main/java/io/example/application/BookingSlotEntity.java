@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
+import java.util.List;
 
 @ComponentId("booking-slot")
 public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent> {
@@ -53,7 +54,31 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
     // NOTE: booking a slot should produce 3
     // `ParticipantBooked` events
     public Effect<Done> bookSlot(Command.BookReservation cmd) {
-        return effects().error("not yet implemented");
+        if (!currentState().isBookable(cmd.studentId, cmd.aircraftId, cmd.instructorId)) {
+            return effects().error("reservation is not bookable");
+        }
+
+        var events = List.of(
+            new BookingEvent.ParticipantBooked(
+                this.entityId,
+                cmd.studentId,
+                Participant.ParticipantType.STUDENT,
+                cmd.bookingId
+            ),
+            new BookingEvent.ParticipantBooked(
+                this.entityId,
+                cmd.instructorId,
+                Participant.ParticipantType.INSTRUCTOR,
+                cmd.bookingId
+            ),
+            new BookingEvent.ParticipantBooked(
+                this.entityId,
+                cmd.aircraftId,
+                Participant.ParticipantType.AIRCRAFT,
+                cmd.bookingId
+            )
+        );
+        return effects().persistAll(events).thenReply((evt) -> Done.getInstance());
     }
 
     // NOTE: canceling a booking should produce 3
@@ -80,6 +105,7 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
         return switch (event) {
             case BookingEvent.ParticipantMarkedAvailable available -> currentState().reserve(available);
             case BookingEvent.ParticipantUnmarkedAvailable unavailable -> currentState().unreserve(unavailable);
+            case BookingEvent.ParticipantBooked booked -> currentState().book(booked);
             default -> currentState();
         };
     }
@@ -92,7 +118,8 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
         }
 
         record BookReservation(
-            String studentId, String aircraftId, String instructorId, String bookingId)
+            String studentId, String aircraftId, String instructorId, String bookingId
+        )
             implements Command {
         }
     }

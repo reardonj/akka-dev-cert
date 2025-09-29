@@ -57,4 +57,50 @@ public class FlightEndpointIntegrationTest extends TestKitSupport {
         Assertions.assertEquals(StatusCodes.OK, response.status());
     }
 
+    @Test
+    public void bookSlot() {
+        String slotId = UUID.randomUUID().toString();
+        String bookingId = UUID.randomUUID().toString();
+
+        httpClient
+            .POST("/flight/availability/" + slotId)
+            .withRequestBody(new FlightEndpoint.AvailabilityRequest("student-1", "student"))
+            .invoke();
+        httpClient
+            .POST("/flight/availability/" + slotId)
+            .withRequestBody(new FlightEndpoint.AvailabilityRequest("aircraft-1", "aircraft"))
+            .invoke();
+        httpClient
+            .POST("/flight/availability/" + slotId)
+            .withRequestBody(new FlightEndpoint.AvailabilityRequest("instructor-1", "instructor"))
+            .invoke();
+        var response = httpClient
+            .POST("/flight/bookings/" + slotId)
+            .withRequestBody(new FlightEndpoint.BookingRequest("student-1", "aircraft-1", "instructor-1", bookingId))
+            .invoke();
+
+        Assertions.assertEquals(StatusCodes.CREATED, response.status());
+    }
+
+    @Test
+    public void bookUnavailableSlot() {
+        String slotId = UUID.randomUUID().toString();
+        String bookingId = UUID.randomUUID().toString();
+
+        httpClient
+            .POST("/flight/availability/" + slotId)
+            .withRequestBody(new FlightEndpoint.AvailabilityRequest("student-1", "student"))
+            .invoke();
+        httpClient
+            .POST("/flight/availability/" + slotId)
+            .withRequestBody(new FlightEndpoint.AvailabilityRequest("aircraft-1", "aircraft"))
+            .invoke();
+        var response = httpClient
+            .POST("/bookings/" + slotId)
+            .withRequestBody(new FlightEndpoint.BookingRequest("student-1", "aircraft-1", "instructor-1", bookingId))
+            .invoke();
+
+        Assertions.assertEquals(StatusCodes.BAD_REQUEST, response.status());
+    }
+
 }

@@ -38,7 +38,16 @@ public class FlightEndpoint extends AbstractHttpEndpoint {
     public HttpResponse createBooking(String slotId, BookingRequest request) {
         log.info("Creating booking for slot {}: {}", slotId, request);
 
-        // Implementation here
+        componentClient
+            .forEventSourcedEntity(slotId)
+            .method(BookingSlotEntity::bookSlot)
+            .invoke(new BookingSlotEntity.Command.BookReservation(
+                request.studentId,
+                request.aircraftId,
+                request.instructorId,
+                request.bookingId
+            ));
+
 
         return HttpResponses.created();
     }
@@ -70,8 +79,10 @@ public class FlightEndpoint extends AbstractHttpEndpoint {
 
         // Add entity state request
 
-        return new Timeslot(Collections.emptySet(),
-            Collections.emptySet());
+        return new Timeslot(
+            Collections.emptySet(),
+            Collections.emptySet()
+        );
     }
 
     // Indicates that the supplied participant is available for booking
@@ -120,7 +131,8 @@ public class FlightEndpoint extends AbstractHttpEndpoint {
 
     // Public API representation of a booking request
     public record BookingRequest(
-        String studentId, String aircraftId, String instructorId, String bookingId) {
+        String studentId, String aircraftId, String instructorId, String bookingId
+    ) {
     }
 
     // Public API representation of an availability mark/unmark request
