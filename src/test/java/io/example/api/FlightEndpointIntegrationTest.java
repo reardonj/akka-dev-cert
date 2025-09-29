@@ -12,8 +12,10 @@ public class FlightEndpointIntegrationTest extends TestKitSupport {
     @Test
     public void availabilityEndpointRejectsInvalidParticipantType() {
         String slotId = UUID.randomUUID().toString();
-        // Verify the cart via the GET endpoint
-        var response = httpClient.POST("/flight/availability/" + slotId).withRequestBody("{\"participantId\": \"alice\", \"participantType\": \"bad type\"}").invoke();
+        var response = httpClient
+            .POST("/flight/availability/" + slotId)
+            .withRequestBody("{\"participantId\": \"alice\", \"participantType\": \"bad type\"}")
+            .invoke();
 
         Assertions.assertEquals(StatusCodes.BAD_REQUEST, response.status());
     }
@@ -21,8 +23,36 @@ public class FlightEndpointIntegrationTest extends TestKitSupport {
     @Test
     public void availabilityEndpointAcceptsValidParticipantType() {
         String slotId = UUID.randomUUID().toString();
-        // Verify the cart via the GET endpoint
-        var response = httpClient.POST("/flight/availability/" + slotId).withRequestBody(new FlightEndpoint.AvailabilityRequest("student-1", "student")).invoke();
+        var response = httpClient
+            .POST("/flight/availability/" + slotId)
+            .withRequestBody(new FlightEndpoint.AvailabilityRequest("student-1", "student"))
+            .invoke();
+
+        Assertions.assertEquals(StatusCodes.OK, response.status());
+    }
+
+
+    @Test
+    public void removeAvailabilityEndpointRejectsInvalidParticipantType() {
+        String slotId = UUID.randomUUID().toString();
+        var response = httpClient
+            .DELETE("/flight/availability/" + slotId)
+            .withRequestBody("{\"participantId\": \"alice\", \"participantType\": \"bad type\"}").invoke();
+
+        Assertions.assertEquals(StatusCodes.BAD_REQUEST, response.status());
+    }
+
+    @Test
+    public void removeAvailabilityEndpointAcceptsValidParticipantType() {
+        String slotId = UUID.randomUUID().toString();
+
+        httpClient
+            .POST("/flight/availability/" + slotId)
+            .withRequestBody(new FlightEndpoint.AvailabilityRequest("student-1", "student"))
+            .invoke();
+        var response = httpClient
+            .DELETE("/flight/availability/" + slotId)
+            .withRequestBody(new FlightEndpoint.AvailabilityRequest("student-1", "student")).invoke();
 
         Assertions.assertEquals(StatusCodes.OK, response.status());
     }

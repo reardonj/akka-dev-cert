@@ -48,5 +48,35 @@ public class BookingSlotEntityTest extends TestKitSupport {
         assertTrue(result.isError());
     }
 
+
+    @Test
+    public void testAvailabilityIsUnmarked() {
+        // Create an instance of the test kit for BookingSlotEntity
+        var testKit = EventSourcedTestKit.of(BookingSlotEntity::new);
+
+        var participant = new Participant("student-1", ParticipantType.STUDENT);
+        var availability = new BookingSlotEntity.Command.MarkSlotAvailable(participant);
+        var unavailability = new BookingSlotEntity.Command.UnmarkSlotAvailable(participant);
+
+        testKit.method(BookingSlotEntity::markSlotAvailable).invoke(availability);
+        testKit.method(BookingSlotEntity::unmarkSlotAvailable).invoke(unavailability);
+
+        var state = testKit.getState();
+        assertTrue(state.available().isEmpty());
+    }
+
+
+    @Test
+    public void testUnmarkAvailabilityIsRejected() {
+        // Create an instance of the test kit for BookingSlotEntity
+        var testKit = EventSourcedTestKit.of(BookingSlotEntity::new);
+
+        var participant = new Participant("student-1", ParticipantType.STUDENT);
+        var unavailability = new BookingSlotEntity.Command.UnmarkSlotAvailable(participant);
+
+        var result = testKit.method(BookingSlotEntity::unmarkSlotAvailable).invoke(unavailability);
+        assertTrue(result.isError());
+    }
+
     // TODO test that cannot be available when booked
 }

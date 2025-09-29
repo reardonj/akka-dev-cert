@@ -109,7 +109,11 @@ public class FlightEndpoint extends AbstractHttpEndpoint {
             throw HttpException.badRequest("invalid participant type");
         }
 
-        // Add codce to unmark slot as available
+        var participant = new Participant(request.participantId, participantType);
+        componentClient
+            .forEventSourcedEntity(slotId)
+            .method(BookingSlotEntity::unmarkSlotAvailable)
+            .invoke(new BookingSlotEntity.Command.UnmarkSlotAvailable(participant));
 
         return HttpResponses.ok();
     }

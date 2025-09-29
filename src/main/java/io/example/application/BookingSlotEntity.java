@@ -38,7 +38,16 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
     }
 
     public Effect<Done> unmarkSlotAvailable(Command.UnmarkSlotAvailable cmd) {
-        return effects().error("not yet implemented");
+        if (!currentState().available().contains(cmd.participant)) {
+            return effects().error("participant not available");
+        }
+
+        var event = new BookingEvent.ParticipantUnmarkedAvailable(
+            this.entityId,
+            cmd.participant.id(),
+            cmd.participant.participantType()
+        );
+        return effects().persist(event).thenReply((evt) -> Done.getInstance());
     }
 
     // NOTE: booking a slot should produce 3
@@ -70,6 +79,7 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
     public Timeslot applyEvent(BookingEvent event) {
         return switch (event) {
             case BookingEvent.ParticipantMarkedAvailable available -> currentState().reserve(available);
+            case BookingEvent.ParticipantUnmarkedAvailable unavailable -> currentState().unreserve(unavailable);
             default -> currentState();
         };
     }
