@@ -30,12 +30,14 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
 
         // TODO check if booked already?
 
-        var event = new BookingEvent.ParticipantMarkedAvailable(
-            this.entityId,
-            cmd.participant.id(),
-            cmd.participant.participantType()
-        );
-        return effects().persist(event).thenReply((evt) -> Done.getInstance());
+        var
+            event =
+            new BookingEvent.ParticipantMarkedAvailable(
+                this.entityId,
+                                                        cmd.participant.id(),
+                                                        cmd.participant.participantType()
+            );
+        return effects().persist(event).thenReply((slot) -> Done.done());
     }
 
     public Effect<Done> unmarkSlotAvailable(Command.UnmarkSlotAvailable cmd) {
@@ -43,12 +45,14 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
             return effects().error("participant not available");
         }
 
-        var event = new BookingEvent.ParticipantUnmarkedAvailable(
-            this.entityId,
-            cmd.participant.id(),
-            cmd.participant.participantType()
-        );
-        return effects().persist(event).thenReply((evt) -> Done.getInstance());
+        var
+            event =
+            new BookingEvent.ParticipantUnmarkedAvailable(
+                this.entityId,
+                                                          cmd.participant.id(),
+                                                          cmd.participant.participantType()
+            );
+        return effects().persist(event).thenReply((slot) -> Done.done());
     }
 
     // NOTE: booking a slot should produce 3
@@ -78,13 +82,28 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
                 cmd.bookingId
             )
         );
-        return effects().persistAll(events).thenReply((evt) -> Done.getInstance());
+        return effects().persistAll(events).thenReply((slot) -> Done.done());
     }
 
     // NOTE: canceling a booking should produce 3
     // `ParticipantCanceled` events
     public Effect<Done> cancelBooking(String bookingId) {
-        return effects().error("not yet implemented");
+        var bookings = currentState().findBooking(bookingId);
+
+        if (bookings.isEmpty()) {
+            return effects().error("booking not found");
+        }
+
+        var events = bookings
+            .stream()
+            .map(booking -> new BookingEvent.ParticipantCanceled(
+                this.entityId,
+                booking.participant().id(),
+                booking.participant().participantType(),
+                booking.bookingId()
+            ))
+            .toList();
+        return effects().persistAll(events).thenReply(slot -> Done.done());
 
     }
 
@@ -96,8 +115,7 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
     public Timeslot emptyState() {
         return new Timeslot(
             // NOTE: these are just estimates for capacity based on it being a sample
-            HashSet.newHashSet(10), HashSet.newHashSet(10)
-        );
+            HashSet.newHashSet(10), HashSet.newHashSet(10));
     }
 
     @Override
@@ -119,8 +137,7 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
 
         record BookReservation(
             String studentId, String aircraftId, String instructorId, String bookingId
-        )
-            implements Command {
+        ) implements Command {
         }
     }
 }
