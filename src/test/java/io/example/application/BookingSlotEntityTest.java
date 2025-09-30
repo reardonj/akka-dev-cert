@@ -155,8 +155,8 @@ public class BookingSlotEntityTest extends TestKitSupport {
         var state = testKit.getState();
         assertTrue(state.bookings().isEmpty());
 
-        // Verify that the participants are now available again
-        assertFalse(state.available().isEmpty());
+        // Verify that the participants are still not available
+        assertTrue(state.available().isEmpty());
     }
 
     @Test

@@ -58,7 +58,10 @@ public class FlightEndpoint extends AbstractHttpEndpoint {
     public HttpResponse cancelBooking(String slotId, String bookingId) {
         log.info("Canceling booking id {}", bookingId);
 
-        // Add booking cancellation code
+        componentClient
+            .forEventSourcedEntity(slotId)
+            .method(BookingSlotEntity::cancelBooking)
+            .invoke(bookingId);
 
         return HttpResponses.ok();
     }

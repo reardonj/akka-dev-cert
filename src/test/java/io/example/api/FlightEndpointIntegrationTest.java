@@ -83,6 +83,62 @@ public class FlightEndpointIntegrationTest extends TestKitSupport {
     }
 
     @Test
+    public void cancelExistingBooking() {
+        String slotId = UUID.randomUUID().toString();
+        String bookingId = UUID.randomUUID().toString();
+
+        httpClient
+            .POST("/flight/availability/" + slotId)
+            .withRequestBody(new FlightEndpoint.AvailabilityRequest("student-1", "student"))
+            .invoke();
+        httpClient
+            .POST("/flight/availability/" + slotId)
+            .withRequestBody(new FlightEndpoint.AvailabilityRequest("aircraft-1", "aircraft"))
+            .invoke();
+        httpClient
+            .POST("/flight/availability/" + slotId)
+            .withRequestBody(new FlightEndpoint.AvailabilityRequest("instructor-1", "instructor"))
+            .invoke();
+        httpClient
+            .POST("/flight/bookings/" + slotId)
+            .withRequestBody(new FlightEndpoint.BookingRequest("student-1", "aircraft-1", "instructor-1", bookingId))
+            .invoke();
+        var response = httpClient
+            .DELETE("/flight/bookings/" + slotId + "/" + bookingId)
+            .invoke();
+
+        Assertions.assertEquals(StatusCodes.OK, response.status());
+    }
+
+    @Test
+    public void cancelNonExistentBooking() {
+        String slotId = UUID.randomUUID().toString();
+        String bookingId = UUID.randomUUID().toString();
+
+        var response = httpClient
+            .DELETE("/flight/bookings/" + slotId + "/" + bookingId)
+            .invoke();
+
+        Assertions.assertEquals(StatusCodes.BAD_REQUEST, response.status());
+    }
+
+    @Test
+    public void cancelBookingWhenSlotNotBooked() {
+        String slotId = UUID.randomUUID().toString();
+        String bookingId = UUID.randomUUID().toString();
+
+        httpClient
+            .POST("/flight/availability/" + slotId)
+            .withRequestBody(new FlightEndpoint.AvailabilityRequest("student-1", "student"))
+            .invoke();
+        var response = httpClient
+            .DELETE("/flight/bookings/" + slotId + "/" + bookingId)
+            .invoke();
+
+        Assertions.assertEquals(StatusCodes.BAD_REQUEST, response.status());
+    }
+
+    @Test
     public void bookUnavailableSlot() {
         String slotId = UUID.randomUUID().toString();
         String bookingId = UUID.randomUUID().toString();
@@ -96,7 +152,7 @@ public class FlightEndpointIntegrationTest extends TestKitSupport {
             .withRequestBody(new FlightEndpoint.AvailabilityRequest("aircraft-1", "aircraft"))
             .invoke();
         var response = httpClient
-            .POST("/bookings/" + slotId)
+            .POST("/flight/bookings/" + slotId)
             .withRequestBody(new FlightEndpoint.BookingRequest("student-1", "aircraft-1", "instructor-1", bookingId))
             .invoke();
 

@@ -34,8 +34,8 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
             event =
             new BookingEvent.ParticipantMarkedAvailable(
                 this.entityId,
-                                                        cmd.participant.id(),
-                                                        cmd.participant.participantType()
+                cmd.participant.id(),
+                cmd.participant.participantType()
             );
         return effects().persist(event).thenReply((slot) -> Done.done());
     }
@@ -49,8 +49,8 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
             event =
             new BookingEvent.ParticipantUnmarkedAvailable(
                 this.entityId,
-                                                          cmd.participant.id(),
-                                                          cmd.participant.participantType()
+                cmd.participant.id(),
+                cmd.participant.participantType()
             );
         return effects().persist(event).thenReply((slot) -> Done.done());
     }
@@ -124,6 +124,7 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
             case BookingEvent.ParticipantMarkedAvailable available -> currentState().reserve(available);
             case BookingEvent.ParticipantUnmarkedAvailable unavailable -> currentState().unreserve(unavailable);
             case BookingEvent.ParticipantBooked booked -> currentState().book(booked);
+            case BookingEvent.ParticipantCanceled cancelled -> currentState().cancelBooking(cancelled.bookingId());
             default -> currentState();
         };
     }
