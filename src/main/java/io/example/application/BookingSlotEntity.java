@@ -108,7 +108,7 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
     }
 
     public ReadOnlyEffect<Timeslot> getSlot() {
-        return effects().error("not yet implemented");
+        return effects().reply(currentState());
     }
 
     @Override
@@ -125,7 +125,6 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
             case BookingEvent.ParticipantUnmarkedAvailable unavailable -> currentState().unreserve(unavailable);
             case BookingEvent.ParticipantBooked booked -> currentState().book(booked);
             case BookingEvent.ParticipantCanceled cancelled -> currentState().cancelBooking(cancelled.bookingId());
-            default -> currentState();
         };
     }
 

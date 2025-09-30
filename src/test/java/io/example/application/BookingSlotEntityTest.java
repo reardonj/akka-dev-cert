@@ -7,13 +7,13 @@ import io.example.domain.Participant;
 import io.example.domain.Participant.ParticipantType;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class BookingSlotEntityTest extends TestKitSupport {
 
     @Test
     public void testInitialBookingSlotStateIsEmpty() {
-        // Create an instance of the test kit for BookingSlotEntity
         var testKit = EventSourcedTestKit.of(BookingSlotEntity::new);
         var state = testKit.getState();
         assertTrue(state.bookings().isEmpty());
@@ -22,27 +22,27 @@ public class BookingSlotEntityTest extends TestKitSupport {
 
     @Test
     public void testAvailabilityIsAdded() {
-        // Create an instance of the test kit for BookingSlotEntity
         var testKit = EventSourcedTestKit.of(BookingSlotEntity::new);
 
-        var
-            availability =
-            new BookingSlotEntity.Command.MarkSlotAvailable(new Participant("student-1", ParticipantType.STUDENT));
+        var availability = new BookingSlotEntity.Command.MarkSlotAvailable(new Participant(
+            "student-1",
+            ParticipantType.STUDENT
+        ));
         var result = testKit.method(BookingSlotEntity::markSlotAvailable).invoke(availability);
         assertEquals(Done.done(), result.getReply());
 
         var state = testKit.getState();
-        assertFalse(state.available().isEmpty());
+        assertEquals(1, state.available().size());
     }
 
     @Test
     public void testDuplicateAvailabilityIsRejected() {
-        // Create an instance of the test kit for BookingSlotEntity
         var testKit = EventSourcedTestKit.of(BookingSlotEntity::new);
 
-        var
-            availability =
-            new BookingSlotEntity.Command.MarkSlotAvailable(new Participant("student-1", ParticipantType.STUDENT));
+        var availability = new BookingSlotEntity.Command.MarkSlotAvailable(new Participant(
+            "student-1",
+            ParticipantType.STUDENT
+        ));
         testKit.method(BookingSlotEntity::markSlotAvailable).invoke(availability);
         var result = testKit.method(BookingSlotEntity::markSlotAvailable).invoke(availability);
         assertTrue(result.isError());
@@ -50,7 +50,6 @@ public class BookingSlotEntityTest extends TestKitSupport {
 
     @Test
     public void testAvailabilityIsUnmarked() {
-        // Create an instance of the test kit for BookingSlotEntity
         var testKit = EventSourcedTestKit.of(BookingSlotEntity::new);
 
         var participant = new Participant("student-1", ParticipantType.STUDENT);
@@ -66,7 +65,6 @@ public class BookingSlotEntityTest extends TestKitSupport {
 
     @Test
     public void testUnmarkAvailabilityIsRejected() {
-        // Create an instance of the test kit for BookingSlotEntity
         var testKit = EventSourcedTestKit.of(BookingSlotEntity::new);
 
         var participant = new Participant("student-1", ParticipantType.STUDENT);
@@ -81,7 +79,6 @@ public class BookingSlotEntityTest extends TestKitSupport {
 
     @Test
     public void testUnavailableParticipantsNotBooked() {
-        // Create an instance of the test kit for BookingSlotEntity
         var testKit = EventSourcedTestKit.of(BookingSlotEntity::new);
 
         var result = testKit
@@ -98,7 +95,6 @@ public class BookingSlotEntityTest extends TestKitSupport {
 
     @Test
     public void testParticipantsBooked() {
-        // Create an instance of the test kit for BookingSlotEntity
         var testKit = EventSourcedTestKit.of(BookingSlotEntity::new);
 
         var student = new Participant("student-1", ParticipantType.STUDENT);
@@ -120,11 +116,19 @@ public class BookingSlotEntityTest extends TestKitSupport {
             ));
 
         assertEquals(Done.done(), result.getReply());
+
+        assertEquals(3, result.getAllEvents().size());
+
+        // Verify that the booking is stored in the state
+        var state = testKit.getState();
+        assertEquals(3, state.bookings().size());
+
+        // Verify that participants are no longer available after booking
+        assertTrue(state.available().isEmpty());
     }
 
     @Test
     public void testBookingCancelled() {
-        // Create an instance of the test kit for BookingSlotEntity
         var testKit = EventSourcedTestKit.of(BookingSlotEntity::new);
 
         var student = new Participant("student-1", ParticipantType.STUDENT);
@@ -161,18 +165,14 @@ public class BookingSlotEntityTest extends TestKitSupport {
 
     @Test
     public void testCancelNonExistentBooking() {
-        // Create an instance of the test kit for BookingSlotEntity
         var testKit = EventSourcedTestKit.of(BookingSlotEntity::new);
 
-        var result = testKit
-            .method(BookingSlotEntity::cancelBooking)
-            .invoke("non-existent-booking");
+        var result = testKit.method(BookingSlotEntity::cancelBooking).invoke("non-existent-booking");
         assertTrue(result.isError());
     }
 
     @Test
     public void testCancelBookingWhenSlotNotBooked() {
-        // Create an instance of the test kit for BookingSlotEntity
         var testKit = EventSourcedTestKit.of(BookingSlotEntity::new);
 
         var student = new Participant("student-1", ParticipantType.STUDENT);
@@ -180,10 +180,16 @@ public class BookingSlotEntityTest extends TestKitSupport {
         markAvailable.invoke(new BookingSlotEntity.Command.MarkSlotAvailable(student));
 
         // Try to cancel a booking when no booking exists for this slot
-        var result = testKit
-            .method(BookingSlotEntity::cancelBooking)
-            .invoke("booking-1");
+        var result = testKit.method(BookingSlotEntity::cancelBooking).invoke("booking-1");
         assertTrue(result.isError());
+    }
+
+    @Test
+    public void testGetSlotWhenEmpty() {
+        var testKit = EventSourcedTestKit.of(BookingSlotEntity::new);
+        var result = testKit.method(BookingSlotEntity::getSlot).invoke();
+
+        assertEquals(testKit.getState(), result.getReply());
     }
 
 }
