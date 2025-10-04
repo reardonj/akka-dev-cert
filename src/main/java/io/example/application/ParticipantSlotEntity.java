@@ -54,13 +54,31 @@ public class ParticipantSlotEntity extends EventSourcedEntity<ParticipantSlotEnt
     }
 
     public sealed interface Commands {
-        record MarkAvailable(String slotId, String participantId, ParticipantType participantType) implements Commands { }
+        record MarkAvailable(String slotId, String participantId, ParticipantType participantType) implements Commands {
+        }
 
-        record UnmarkAvailable(String slotId, String participantId, ParticipantType participantType) implements Commands { }
+        record UnmarkAvailable(
+            String slotId,
+            String participantId,
+            ParticipantType participantType
+        ) implements Commands {
+        }
 
-        record Book(String slotId, String participantId, ParticipantType participantType, String bookingId) implements Commands { }
+        record Book(
+            String slotId,
+            String participantId,
+            ParticipantType participantType,
+            String bookingId
+        ) implements Commands {
+        }
 
-        record Cancel(String slotId, String participantId, ParticipantType participantType, String bookingId) implements Commands { }
+        record Cancel(
+            String slotId,
+            String participantId,
+            ParticipantType participantType,
+            String bookingId
+        ) implements Commands {
+        }
     }
 
     public sealed interface Event {

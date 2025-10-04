@@ -47,7 +47,6 @@ public class FlightEndpoint extends AbstractHttpEndpoint {
                 request.bookingId
             ));
 
-
         return HttpResponses.created();
     }
 
@@ -118,6 +117,8 @@ public class FlightEndpoint extends AbstractHttpEndpoint {
             log.warn("Bad participant type {}", request.participantType());
             throw HttpException.badRequest("invalid participant type");
         }
+
+        log.info("Marking timeslot unavailable for entity {}", slotId);
 
         var participant = new Participant(request.participantId, participantType);
         componentClient

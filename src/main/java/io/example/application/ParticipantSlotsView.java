@@ -14,14 +14,12 @@ import java.util.List;
 @ComponentId("view-participant-slots")
 public class ParticipantSlotsView extends View {
 
-    private static Logger logger = LoggerFactory.getLogger(ParticipantSlotsView.class);
+    private static final Logger logger = LoggerFactory.getLogger(ParticipantSlotsView.class);
 
     @Consume.FromEventSourcedEntity(ParticipantSlotEntity.class)
     public static class ParticipantSlotsViewUpdater extends TableUpdater<SlotRow> {
 
         public Effect<SlotRow> onEvent(ParticipantSlotEntity.Event event) {
-            this.updateContext().metadata().forEach(metadata -> logger.info("{}: {}", metadata.getKey(), metadata.getValue()));
-
             return switch (event) {
                 case Booked booked -> effects().updateRow(new SlotRow(
                     booked.slotId(),
@@ -44,11 +42,7 @@ public class ParticipantSlotsView extends View {
     }
 
     public record SlotRow(
-        String slotId,
-        String participantId,
-        String participantType,
-        String bookingId,
-        String status
+        String slotId, String participantId, String participantType, String bookingId, String status
     ) {
     }
 
