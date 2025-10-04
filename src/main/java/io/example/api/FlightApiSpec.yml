@@ -1,0 +1,189 @@
+openapi: 3.0.3
+info:
+  title: Flight API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /flight/bookings/{slotId}:
+    post:
+      summary: Create a new booking
+      description: Creates a new booking for a given slot with the provided participant details.
+      parameters:
+        - name: slotId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingRequest'
+      responses:
+        '201':
+          description: Booking created successfully
+          content: {}
+        '400':
+          description: Bad request
+          content: {}
+  /flight/bookings/{slotId}/{bookingId}:
+    delete:
+      summary: Cancel an existing booking
+      description: Cancels an existing booking identified by slot ID and booking ID.
+      parameters:
+        - name: slotId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Booking canceled successfully
+          content: {}
+        '400':
+          description: Bad request
+          content: {}
+  /flight/slots/{participantId}/{status}:
+    get:
+      summary: Retrieve slots by participant and status
+      description: Retrieves all slots in which a given participant has the specified status.
+      parameters:
+        - name: participantId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Slots retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlotList'
+        '400':
+          description: Bad request
+          content: {}
+  /flight/availability/{slotId}:
+    get:
+      summary: Get slot availability
+      description: Returns the internal availability state for a given slot.
+      parameters:
+        - name: slotId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Slot availability retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Timeslot'
+        '400':
+          description: Bad request
+          content: {}
+    post:
+      summary: Mark slot as available
+      description: Indicates that the supplied participant is available for booking within the indicated time slot.
+      parameters:
+        - name: slotId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AvailabilityRequest'
+      responses:
+        '200':
+          description: Slot marked as available successfully
+          content: {}
+        '400':
+          description: Bad request
+          content: {}
+    delete:
+      summary: Unmark slot as available
+      description: Unmarks a slot as available for the given participant.
+      parameters:
+        - name: slotId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AvailabilityRequest'
+      responses:
+        '200':
+          description: Slot unmarked as available successfully
+          content: {}
+        '400':
+          description: Bad request
+          content: {}
+components:
+  schemas:
+    BookingRequest:
+      type: object
+      required:
+        - studentId
+        - aircraftId
+        - instructorId
+        - bookingId
+      properties:
+        studentId:
+          type: string
+        aircraftId:
+          type: string
+        instructorId:
+          type: string
+        bookingId:
+          type: string
+    AvailabilityRequest:
+      type: object
+      required:
+        - participantId
+        - participantType
+      properties:
+        participantId:
+          type: string
+        participantType:
+          type: string
+    SlotList:
+      type: object
+      properties:
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/Timeslot'
+    Timeslot:
+      type: object
+      properties:
+        id:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
