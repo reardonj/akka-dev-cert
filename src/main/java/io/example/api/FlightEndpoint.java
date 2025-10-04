@@ -2,6 +2,7 @@ package io.example.api;
 
 import java.util.Collections;
 
+import org.openapitools.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,9 +81,9 @@ public class FlightEndpoint extends AbstractHttpEndpoint {
         ParticipantType participantType;
 
         try {
-            participantType = ParticipantType.valueOf(request.participantType().trim().toUpperCase());
+            participantType = ParticipantType.valueOf(request.getParticipantType().trim().toUpperCase());
         } catch (IllegalArgumentException ex) {
-            log.warn("Bad participant type {}", request.participantType());
+            log.warn("Bad participant type {}", request.getParticipantType());
             throw HttpException.badRequest("invalid participant type");
         }
 
@@ -98,23 +99,14 @@ public class FlightEndpoint extends AbstractHttpEndpoint {
     public HttpResponse unmarkAvailable(String slotId, AvailabilityRequest request) {
         ParticipantType participantType;
         try {
-            participantType = ParticipantType.valueOf(request.participantType().trim().toUpperCase());
+            participantType = ParticipantType.valueOf(request.getParticipantType().trim().toUpperCase());
         } catch (IllegalArgumentException ex) {
-            log.warn("Bad participant type {}", request.participantType());
+            log.warn("Bad participant type {}", request.getParticipantType());
             throw HttpException.badRequest("invalid participant type");
         }
 
         // Add codce to unmark slot as available
 
         return HttpResponses.ok();
-    }
-
-    // Public API representation of a booking request
-    public record BookingRequest(
-            String studentId, String aircraftId, String instructorId, String bookingId) {
-    }
-
-    // Public API representation of an availability mark/unmark request
-    public record AvailabilityRequest(String participantId, String participantType) {
     }
 }
