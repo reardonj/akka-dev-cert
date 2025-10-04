@@ -128,6 +128,32 @@ public class BookingSlotEntityTest extends TestKitSupport {
     }
 
     @Test
+    public void testParticipantsCannotDoubleBook() {
+        var testKit = EventSourcedTestKit.of(BookingSlotEntity::new);
+
+        var student = new Participant("student-1", ParticipantType.STUDENT);
+        var instructor = new Participant("instructor-1", ParticipantType.INSTRUCTOR);
+        var aircraft = new Participant("airplane-1", ParticipantType.AIRCRAFT);
+
+        var markAvailable = testKit.method(BookingSlotEntity::markSlotAvailable);
+        markAvailable.invoke(new BookingSlotEntity.Command.MarkSlotAvailable(student));
+        markAvailable.invoke(new BookingSlotEntity.Command.MarkSlotAvailable(instructor));
+        markAvailable.invoke(new BookingSlotEntity.Command.MarkSlotAvailable(aircraft));
+        testKit
+            .method(BookingSlotEntity::bookSlot)
+            .invoke(new BookingSlotEntity.Command.BookReservation(
+                student.id(),
+                aircraft.id(),
+                instructor.id(),
+                "booking-1"
+            ));
+
+        var result = markAvailable.invoke(new BookingSlotEntity.Command.MarkSlotAvailable(student));
+
+        assertTrue(result.isError());
+    }
+
+    @Test
     public void testBookingCancelled() {
         var testKit = EventSourcedTestKit.of(BookingSlotEntity::new);
 

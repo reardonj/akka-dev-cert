@@ -28,7 +28,10 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
             return effects().error("participant already available");
         }
 
-        // TODO check if booked already?
+        // Ideally the domain model would be a map for efficiency
+        if (currentState().bookings().stream().anyMatch(booking -> booking.participant().equals(cmd.participant))) {
+            return effects().error("participant already booked");
+        }
 
         var event = new BookingEvent.ParticipantMarkedAvailable(
             this.entityId,
