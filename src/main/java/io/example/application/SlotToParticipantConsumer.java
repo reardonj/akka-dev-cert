@@ -23,8 +23,58 @@ public class SlotToParticipantConsumer extends Consumer {
     }
 
     public Effect onEvent(BookingEvent event) {
-        // Supply your own implementation
-        return effects().done();
+        return switch (event) {
+            case BookingEvent.ParticipantBooked booked -> {
+                client
+                    .forEventSourcedEntity(participantSlotId(event))
+                    .method(ParticipantSlotEntity::book)
+                    .invoke(new ParticipantSlotEntity.Commands.Book(
+                        booked.slotId(),
+                        booked.participantId(),
+                        booked.participantType(),
+                        booked.bookingId()
+                    ));
+                yield effects().done();
+            }
+
+            case BookingEvent.ParticipantCanceled canceled -> {
+                client
+                    .forEventSourcedEntity(participantSlotId(event))
+                    .method(ParticipantSlotEntity::cancel)
+                    .invoke(new ParticipantSlotEntity.Commands.Cancel(
+                        canceled.slotId(),
+                        canceled.participantId(),
+                        canceled.participantType(),
+                        canceled.bookingId()
+                    ));
+                yield effects().done();
+            }
+
+            case BookingEvent.ParticipantMarkedAvailable markedAvailable -> {
+                client
+                    .forEventSourcedEntity(participantSlotId(event))
+                    .method(ParticipantSlotEntity::markAvailable)
+                    .invoke(new ParticipantSlotEntity.Commands.MarkAvailable(
+                        markedAvailable.slotId(),
+                        markedAvailable.participantId(),
+                        markedAvailable.participantType()
+                    ));
+                yield effects().done();
+            }
+
+            case BookingEvent.ParticipantUnmarkedAvailable unmarkedAvailable -> {
+                client
+                    .forEventSourcedEntity(participantSlotId(event))
+                    .method(ParticipantSlotEntity::unmarkAvailable)
+                    .invoke(new ParticipantSlotEntity.Commands.UnmarkAvailable(
+                        unmarkedAvailable.slotId(),
+                        unmarkedAvailable.participantId(),
+                        unmarkedAvailable.participantType()
+                    ));
+                yield effects().done();
+            }
+        };
+
     }
 
     // Participant slots are keyed by a derived key made up of
@@ -34,8 +84,7 @@ public class SlotToParticipantConsumer extends Consumer {
     private String participantSlotId(BookingEvent event) {
         return switch (event) {
             case BookingEvent.ParticipantBooked evt -> evt.slotId() + "-" + evt.participantId();
-            case BookingEvent.ParticipantUnmarkedAvailable evt ->
-                evt.slotId() + "-" + evt.participantId();
+            case BookingEvent.ParticipantUnmarkedAvailable evt -> evt.slotId() + "-" + evt.participantId();
             case BookingEvent.ParticipantMarkedAvailable evt -> evt.slotId() + "-" + evt.participantId();
             case BookingEvent.ParticipantCanceled evt -> evt.slotId() + "-" + evt.participantId();
         };

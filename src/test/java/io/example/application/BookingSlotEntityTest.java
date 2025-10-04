@@ -191,5 +191,4 @@ public class BookingSlotEntityTest extends TestKitSupport {
 
         assertEquals(testKit.getState(), result.getReply());
     }
-
 }

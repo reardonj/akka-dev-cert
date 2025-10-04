@@ -6,15 +6,13 @@ import akka.javasdk.annotations.Query;
 import akka.javasdk.view.TableUpdater;
 import akka.javasdk.view.View;
 import io.example.application.ParticipantSlotEntity.Event.Booked;
-import io.example.application.ParticipantSlotEntity.Event.Canceled;
-import io.example.application.ParticipantSlotEntity.Event.MarkedAvailable;
-import io.example.application.ParticipantSlotEntity.Event.UnmarkedAvailable;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//@ComponentId("view-participant-slots")
-public class ParticipantSlotsView /*extends View*/ {
+import java.util.List;
+
+@ComponentId("view-participant-slots")
+public class ParticipantSlotsView extends View {
 
     private static Logger logger = LoggerFactory.getLogger(ParticipantSlotsView.class);
 
@@ -22,17 +20,36 @@ public class ParticipantSlotsView /*extends View*/ {
     public static class ParticipantSlotsViewUpdater extends TableUpdater<SlotRow> {
 
         public Effect<SlotRow> onEvent(ParticipantSlotEntity.Event event) {
-            // Supply your own implementation
-            return effects().ignore();
+            this.updateContext().metadata().forEach(metadata -> logger.info("{}: {}", metadata.getKey(), metadata.getValue()));
+
+            return switch (event) {
+                case Booked booked -> effects().updateRow(new SlotRow(
+                    booked.slotId(),
+                    booked.participantId(),
+                    booked.participantType().toString(),
+                    booked.bookingId(),
+                    "booked"
+                ));
+                case ParticipantSlotEntity.Event.MarkedAvailable markedAvailable -> effects().updateRow(new SlotRow(
+                    markedAvailable.slotId(),
+                    markedAvailable.participantId(),
+                    markedAvailable.participantType().toString(),
+                    "",
+                    "available"
+                ));
+                case ParticipantSlotEntity.Event.Canceled canceled -> effects().deleteRow();
+                case ParticipantSlotEntity.Event.UnmarkedAvailable unmarkedAvailable -> effects().deleteRow();
+            };
         }
     }
 
     public record SlotRow(
-            String slotId,
-            String participantId,
-            String participantType,
-            String bookingId,
-            String status) {
+        String slotId,
+        String participantId,
+        String participantType,
+        String bookingId,
+        String status
+    ) {
     }
 
     public record ParticipantStatusInput(String participantId, String status) {
@@ -40,14 +57,9 @@ public class ParticipantSlotsView /*extends View*/ {
 
     public record SlotList(List<SlotRow> slots) {
     }
-//
-//    // @Query("SELECT .... ")
-//    public QueryEffect<SlotList> getSlotsByParticipant(String participantId) {
-//        return queryResult();
-//    }
-//
-//    // @Query("SELECT ...")
-//    public QueryEffect<SlotList> getSlotsByParticipantAndStatus(ParticipantStatusInput input) {
-//        return queryResult();
-//    }
+
+    @Query("SELECT * AS slots FROM participant_slots WHERE participantId = :participantId AND status = :status")
+    public QueryEffect<SlotList> getSlotsByParticipantAndStatus(ParticipantStatusInput input) {
+        return queryResult();
+    }
 }

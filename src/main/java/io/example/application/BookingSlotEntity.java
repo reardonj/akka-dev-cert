@@ -30,13 +30,11 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
 
         // TODO check if booked already?
 
-        var
-            event =
-            new BookingEvent.ParticipantMarkedAvailable(
-                this.entityId,
-                cmd.participant.id(),
-                cmd.participant.participantType()
-            );
+        var event = new BookingEvent.ParticipantMarkedAvailable(
+            this.entityId,
+            cmd.participant.id(),
+            cmd.participant.participantType()
+        );
         return effects().persist(event).thenReply((slot) -> Done.done());
     }
 
@@ -45,13 +43,11 @@ public class BookingSlotEntity extends EventSourcedEntity<Timeslot, BookingEvent
             return effects().error("participant not available");
         }
 
-        var
-            event =
-            new BookingEvent.ParticipantUnmarkedAvailable(
-                this.entityId,
-                cmd.participant.id(),
-                cmd.participant.participantType()
-            );
+        var event = new BookingEvent.ParticipantUnmarkedAvailable(
+            this.entityId,
+            cmd.participant.id(),
+            cmd.participant.participantType()
+        );
         return effects().persist(event).thenReply((slot) -> Done.done());
     }
 

@@ -11,14 +11,13 @@ import akka.javasdk.http.AbstractHttpEndpoint;
 import akka.javasdk.http.HttpException;
 import akka.javasdk.http.HttpResponses;
 import io.example.application.BookingSlotEntity;
+import io.example.application.ParticipantSlotsView;
 import io.example.application.ParticipantSlotsView.SlotList;
 import io.example.domain.Participant;
 import io.example.domain.Participant.ParticipantType;
 import io.example.domain.Timeslot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Collections;
 
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.INTERNET))
 @HttpEndpoint("/flight")
@@ -70,22 +69,19 @@ public class FlightEndpoint extends AbstractHttpEndpoint {
     // Used to retrieve bookings and slots in which the participant is available
     @Get("/slots/{participantId}/{status}")
     public SlotList slotsByStatus(String participantId, String status) {
-
-        // Add view query
-
-        return new SlotList(Collections.emptyList());
+        return componentClient
+            .forView()
+            .method(ParticipantSlotsView::getSlotsByParticipantAndStatus)
+            .invoke(new ParticipantSlotsView.ParticipantStatusInput(participantId, status));
     }
 
     // Returns the internal availability state for a given slot
     @Get("/availability/{slotId}")
     public Timeslot getSlot(String slotId) {
-
-        // Add entity state request
-
-        return new Timeslot(
-            Collections.emptySet(),
-            Collections.emptySet()
-        );
+        return componentClient
+            .forEventSourcedEntity(slotId)
+            .method(BookingSlotEntity::getSlot)
+            .invoke();
     }
 
     // Indicates that the supplied participant is available for booking
