@@ -74,9 +74,6 @@ public class BookingSlotEntityTest extends TestKitSupport {
         assertTrue(result.isError());
     }
 
-    // TODO test that cannot be available when booked?
-
-
     @Test
     public void testUnavailableParticipantsNotBooked() {
         var testKit = EventSourcedTestKit.of(BookingSlotEntity::new);
